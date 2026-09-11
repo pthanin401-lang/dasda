@@ -50,6 +50,7 @@
       inset 3px 0 0 rgba(0,0,0,0.5),
       inset -3px 0 0 rgba(0,0,0,0.5);
   }
+  #stage:focus{ outline:none; }
   #stage::before{
     content:'';
     position:absolute;
@@ -89,6 +90,25 @@
     font-size:9px;
   }
   #pauseBtn:active{ background:var(--grid-line); box-shadow:inset 0 1px 4px rgba(0,0,0,0.6); }
+
+  #autoFireBtn{
+    color:#8a839c;
+    background:linear-gradient(to bottom, #241a3f, var(--panel));
+    border:1px solid var(--bezel-1);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,0.08), 0 1px 3px rgba(0,0,0,0.4);
+    padding:6px 8px;
+    border-radius:4px;
+    cursor:pointer;
+    font-size:8px;
+    margin-left:6px;
+  }
+  #autoFireBtn.active{
+    color:var(--panel);
+    background:linear-gradient(to bottom, var(--hot-pink), #b8215f);
+    border-color:var(--hot-pink);
+    box-shadow:0 0 10px rgba(255,77,157,0.6);
+  }
+  #autoFireBtn:active{ transform:translateY(1px); }
 
   #ultiBar{
     position:relative;
@@ -151,6 +171,45 @@
   @keyframes ultiPulse{
     0%,100%{ box-shadow:inset 0 2px 3px rgba(0,0,0,0.5), 0 0 6px rgba(255,210,63,0.4); }
     50%{ box-shadow:inset 0 2px 3px rgba(0,0,0,0.5), 0 0 18px rgba(255,210,63,0.9); }
+  }
+
+  #laserBar{
+    position:relative;
+    margin:0 12px 10px;
+    height:8px;
+    background:var(--panel);
+    border:2px solid #1c3a42;
+    border-radius:3px;
+    overflow:hidden;
+    box-shadow:inset 0 2px 3px rgba(0,0,0,0.5);
+    z-index:5;
+  }
+  #laserFill{
+    position:relative;
+    height:100%;
+    width:100%;
+    background:linear-gradient(to right, #0c3a42, var(--cyan));
+    box-shadow:0 0 6px rgba(61,220,255,0.5);
+    transition:width 0.1s linear;
+  }
+  #laserLabel{
+    position:absolute;
+    top:50%; left:50%;
+    transform:translate(-50%,-50%);
+    font-size:6px;
+    letter-spacing:1px;
+    color:#fff;
+    text-shadow:0 0 4px #000, 0 0 4px #000;
+    z-index:3;
+    pointer-events:none;
+  }
+  #laserBar.ready{
+    border-color:var(--cyan);
+    animation:laserBarPulse 0.8s infinite;
+  }
+  @keyframes laserBarPulse{
+    0%,100%{ box-shadow:inset 0 2px 3px rgba(0,0,0,0.5), 0 0 4px rgba(61,220,255,0.4); }
+    50%{ box-shadow:inset 0 2px 3px rgba(0,0,0,0.5), 0 0 12px rgba(61,220,255,0.9); }
   }
 
   #canvasWrap{
@@ -476,6 +535,48 @@
     transform:translateY(2px);
   }
 
+  #laserBtn{
+    position:relative;
+    width:64px; height:64px;
+    border-radius:50%;
+    background:radial-gradient(circle at 35% 28%, #10283a, var(--panel) 72%);
+    border:2px solid #1c3a42;
+    color:#4a7a8a;
+    font-size:8px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    opacity:0.55;
+    box-shadow:
+      inset 0 2px 0 rgba(255,255,255,0.05),
+      inset 0 -8px 14px rgba(0,0,0,0.5),
+      0 4px 0 rgba(0,0,0,0.35);
+    transition:all 0.2s;
+  }
+  #laserBtn.ready{
+    border-color:var(--cyan);
+    color:var(--cyan);
+    opacity:1;
+    box-shadow:
+      inset 0 2px 0 rgba(255,255,255,0.1),
+      inset 0 -8px 14px rgba(0,0,0,0.45),
+      0 4px 0 rgba(0,0,0,0.35),
+      0 0 16px rgba(61,220,255,0.5);
+    animation:laserBtnPulse 0.8s infinite;
+  }
+  @keyframes laserBtnPulse{
+    0%,100%{ box-shadow:inset 0 2px 0 rgba(255,255,255,0.1), inset 0 -8px 14px rgba(0,0,0,0.45), 0 4px 0 rgba(0,0,0,0.35), 0 0 10px rgba(61,220,255,0.4); }
+    50%{ box-shadow:inset 0 2px 0 rgba(255,255,255,0.1), inset 0 -8px 14px rgba(0,0,0,0.45), 0 4px 0 rgba(0,0,0,0.35), 0 0 22px rgba(61,220,255,0.9); }
+  }
+  #laserBtn.ready:active{
+    background:radial-gradient(circle at 35% 28%, var(--cyan), #0c3a42 72%);
+    color:var(--panel);
+    box-shadow:
+      inset 0 3px 10px rgba(0,0,0,0.6),
+      0 0 26px rgba(61,220,255,0.9);
+    transform:translateY(2px);
+  }
+
   @media (min-width:700px){
     #stage{ box-shadow:0 0 0 4px var(--grid-line), 0 0 60px rgba(0,0,0,0.6); }
   }
@@ -483,17 +584,23 @@
 </head>
 <body>
 
-<div id="stage">
+<div id="stage" tabindex="0">
   <div id="hud">
     <span id="scoreDisplay">SCORE 0000</span>
     <span class="level" id="levelDisplay">WAVE 1</span>
     <span class="lives" id="livesDisplay">♥ x3</span>
     <span id="pauseBtn">❙❙</span>
+    <span id="autoFireBtn">AUTO</span>
   </div>
 
   <div id="ultiBar">
     <div id="ultiFill"></div>
     <span id="ultiLabel">ULTI</span>
+  </div>
+
+  <div id="laserBar">
+    <div id="laserFill"></div>
+    <span id="laserLabel">LASER</span>
   </div>
 
   <div id="canvasWrap">
@@ -506,7 +613,7 @@
       <div class="legendCard">
         <div class="ctrlRow"><span class="keycap">←→</span><span>เคลื่อนที่เรือ</span></div>
         <div class="ctrlRow"><span class="keycap">SPACE</span><span>ยิง — ยิงถี่ๆ เพื่อคอมโบ</span></div>
-        <div class="ctrlRow"><span class="keycap keycap-cyan">CTRL</span><span>แดชหลบ — อมตะชั่วครู่</span></div>
+        <div class="ctrlRow"><span class="keycap keycap-cyan">X / ปุ่ม LASER</span><span>ยิงเลเซอร์ทะลุคอลัมน์ — กวาดทุกอย่างในแนวตั้ง</span></div>
         <div class="ctrlRow"><span class="keycap keycap-amber">SHIFT / Z</span><span>ปล่อย ULTI เมื่อหลอดเต็ม</span></div>
         <div class="ctrlRow"><span class="keycap">P</span><span>พักเกม</span></div>
         <div class="legendDivider"></div>
@@ -533,6 +640,7 @@
       <div class="ctrlBtn" id="leftBtn">◀</div>
       <div class="ctrlBtn" id="rightBtn">▶</div>
     </div>
+    <div id="laserBtn">LASER</div>
     <div id="fireBtn">FIRE</div>
     <div id="ultiBtn">ULTI</div>
   </div>
@@ -540,6 +648,7 @@
 
 <script>
 (function(){
+  const stage = document.getElementById('stage');
   const canvas = document.getElementById('game');
   const ctx = canvas.getContext('2d');
   const wrap = document.getElementById('canvasWrap');
@@ -551,7 +660,11 @@
   const ultiBar = document.getElementById('ultiBar');
   const ultiFill = document.getElementById('ultiFill');
   const ultiBtn = document.getElementById('ultiBtn');
+  const laserBar = document.getElementById('laserBar');
+  const laserFill = document.getElementById('laserFill');
+  const laserBtn = document.getElementById('laserBtn');
   const pauseBtn = document.getElementById('pauseBtn');
+  const autoFireBtn = document.getElementById('autoFireBtn');
   const leaderboardBtn = document.getElementById('leaderboardBtn');
   const startScreenHTML = overlay.innerHTML;
 
@@ -569,6 +682,16 @@
   }
   window.addEventListener('resize', resize);
   resize();
+
+  // keep the stage focused so hardware keyboards (bluetooth/tablet
+  // keyboards) reliably deliver keydown events to the page instead of
+  // being swallowed by the browser chrome
+  function focusStage(){
+    try{ stage.focus({preventScroll:true}); }catch(e){ stage.focus(); }
+  }
+  stage.addEventListener('mousedown', focusStage);
+  stage.addEventListener('touchstart', focusStage, {passive:true});
+  window.addEventListener('load', focusStage);
 
   // ---------- Audio ----------
   let actx = null;
@@ -615,9 +738,10 @@
       setTimeout(()=>beep(90,0.12,'triangle',0.09),70);
       setTimeout(()=>beep(70,0.22,'triangle',0.1),150);
     },
-    dash: ()=>{
-      beep(700,0.05,'square',0.05);
-      setTimeout(()=>beep(1100,0.06,'square',0.045),35);
+    laser: ()=>{
+      beep(1600,0.1,'sawtooth',0.07);
+      setTimeout(()=>beep(2000,0.09,'square',0.06),35);
+      setTimeout(()=>beep(2400,0.08,'square',0.05),70);
     }
   };
 
@@ -716,6 +840,7 @@
     lives:3,
     wave:1,
     keys:{left:false,right:false,fire:false},
+    autoFire:false,
     lastShot:0,
     shotCooldown:280,
     player:null,
@@ -747,13 +872,10 @@
     giantUntil:0,
     boss:null,
     paused:false,
-    dashCooldown:1000,
-    dashReadyAt:0,
-    dashUntil:0,
-    dashVX:0,
-    dashTrail:[],
-    lastTapLeftAt:-9999,
-    lastTapRightAt:-9999,
+    laserCooldown:4000,
+    laserReadyAt:0,
+    laserUntil:0,
+    laserX:0,
     replay:{ frames:[], counter:0, maxFrames:130 },
     replayPlaying:false,
     replayForced:false,
@@ -862,12 +984,8 @@
     state.dizzyUntil = 0;
     state.giantUntil = 0;
     state.paused = false;
-    state.dashReadyAt = 0;
-    state.dashUntil = 0;
-    state.dashVX = 0;
-    state.dashTrail = [];
-    state.lastTapLeftAt = -9999;
-    state.lastTapRightAt = -9999;
+    state.laserReadyAt = 0;
+    state.laserUntil = 0;
     state.replay.frames = [];
     state.replay.counter = 0;
     state.replayPlaying = false;
@@ -877,6 +995,7 @@
     initStars();
     updateHUD();
     updateUltiUI();
+    updateLaserUI(performance.now());
   }
 
   function updateHUD(){
@@ -893,21 +1012,31 @@
     ultiBtn.classList.toggle('ready', ready);
   }
 
+  function updateLaserUI(now){
+    const remaining = Math.max(0, state.laserReadyAt - now);
+    const pct = 100 - Math.min(100, (remaining / state.laserCooldown) * 100);
+    laserFill.style.width = pct + '%';
+    laserBar.classList.toggle('ready', remaining <= 0);
+    laserBtn.classList.toggle('ready', remaining <= 0);
+  }
+
   function togglePause(){
     if(!state.running) return;
     state.paused = !state.paused;
     pauseBtn.textContent = state.paused ? '►' : '❙❙';
   }
 
-  // ---------- Leaderboard (Supabase cloud storage, with localStorage fallback) ----------
-  const LB_KEY = 'pixel_invaders_leaderboard';
-
-  // Supabase config
+  // ---------- Leaderboard (Supabase, with localStorage fallback if offline) ----------
   const SUPABASE_URL = 'https://klyfylfqiikhfauysatn.supabase.co';
   const SUPABASE_KEY = 'sb_publishable_w6C9R2egMbre7nhe1JY2Wg_qWOsDpRq';
-  const SUPABASE_TABLE = 'dd';
-  const supabaseOk = !!(SUPABASE_URL && SUPABASE_KEY && typeof fetch === 'function');
+  const SUPABASE_TABLE = 'dd'; // table name, taken from the REST URL you gave
+  const SUPABASE_REST = `${SUPABASE_URL}/rest/v1/${SUPABASE_TABLE}`;
+  const SUPABASE_HEADERS = {
+    'apikey': SUPABASE_KEY,
+    'Authorization': `Bearer ${SUPABASE_KEY}`
+  };
 
+  const LB_KEY = 'pixel_invaders_leaderboard';
   let localStorageOk = false;
   try{
     const t = '__pixel_invaders_test__';
@@ -915,86 +1044,69 @@
     window.localStorage.removeItem(t);
     localStorageOk = true;
   }catch(err){ localStorageOk = false; }
-  const storageOk = supabaseOk || localStorageOk;
-  let storageIsShared = supabaseOk;
+  const storageOk = true;       // Supabase is always attempted first
+  const storageIsShared = true; // Supabase scores are shared across everyone playing this page
 
   function escapeHtml(str){
     return String(str).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   }
 
-  function supabaseHeaders(extra){
-    return Object.assign({
-      'apikey': SUPABASE_KEY,
-      'Authorization': 'Bearer ' + SUPABASE_KEY,
-      'Content-Type': 'application/json'
-    }, extra || {});
+  function localGetLeaderboard(){
+    if(!localStorageOk) return [];
+    try{
+      const raw = window.localStorage.getItem(LB_KEY);
+      if(!raw) return [];
+      const arr = JSON.parse(raw);
+      return Array.isArray(arr) ? arr : [];
+    }catch(err){ return []; }
   }
 
-  async function getLeaderboardFromSupabase(){
-    const url = `${SUPABASE_URL}/rest/v1/${SUPABASE_TABLE}?select=name,score,wave&order=score.desc&limit=30`;
-    const res = await fetch(url, { headers: supabaseHeaders() });
-    if(!res.ok) throw new Error('supabase select failed: ' + res.status);
-    const data = await res.json();
-    return Array.isArray(data) ? data : [];
-  }
-
-  async function saveLeaderboardEntryToSupabase(name, score, wave){
-    const url = `${SUPABASE_URL}/rest/v1/${SUPABASE_TABLE}`;
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: supabaseHeaders({ 'Prefer': 'return=minimal' }),
-      body: JSON.stringify([{ name: name || 'PLAYER', score, wave }])
-    });
-    if(!res.ok) throw new Error('supabase insert failed: ' + res.status);
+  function localSaveLeaderboardEntry(name, score, wave){
+    if(!localStorageOk) return null;
+    try{
+      const list = localGetLeaderboard();
+      list.push({ name: name || 'PLAYER', score, wave, ts: Date.now() });
+      list.sort((a,b)=> b.score - a.score);
+      const top = list.slice(0, 30);
+      window.localStorage.setItem(LB_KEY, JSON.stringify(top));
+      return top;
+    }catch(err){ return null; }
   }
 
   async function getLeaderboard(){
-    if(supabaseOk){
-      try{
-        return await getLeaderboardFromSupabase();
-      }catch(err){
-        console.warn('Supabase leaderboard read failed, falling back to local storage.', err);
-        storageIsShared = false;
-      }
+    try{
+      const url = `${SUPABASE_REST}?select=name,score,wave&order=score.desc&limit=15`;
+      const res = await fetch(url, { headers: SUPABASE_HEADERS });
+      if(!res.ok) throw new Error('Supabase select failed: ' + res.status);
+      const data = await res.json();
+      return Array.isArray(data) ? data : [];
+    }catch(err){
+      console.error('Supabase getLeaderboard error, falling back to localStorage:', err);
+      return localGetLeaderboard();
     }
-    if(localStorageOk){
-      try{
-        const raw = window.localStorage.getItem(LB_KEY);
-        if(!raw) return [];
-        const arr = JSON.parse(raw);
-        return Array.isArray(arr) ? arr : [];
-      }catch(err){
-        return [];
-      }
-    }
-    return [];
   }
 
   async function saveLeaderboardEntry(name, score, wave){
-    if(!storageOk) return null;
-    if(supabaseOk){
-      try{
-        await saveLeaderboardEntryToSupabase(name, score, wave);
-        return await getLeaderboardFromSupabase();
-      }catch(err){
-        console.warn('Supabase leaderboard save failed, falling back to local storage.', err);
-        storageIsShared = false;
+    const entry = { name: (name || 'PLAYER'), score, wave };
+    try{
+      const res = await fetch(SUPABASE_REST, {
+        method: 'POST',
+        headers: {
+          ...SUPABASE_HEADERS,
+          'Content-Type': 'application/json',
+          'Prefer': 'return=minimal'
+        },
+        body: JSON.stringify(entry)
+      });
+      if(!res.ok){
+        const body = await res.text().catch(()=> '');
+        throw new Error('Supabase insert failed: ' + res.status + ' ' + body);
       }
+      return await getLeaderboard();
+    }catch(err){
+      console.error('Supabase saveLeaderboardEntry error, falling back to localStorage:', err);
+      return localSaveLeaderboardEntry(name, score, wave);
     }
-    if(localStorageOk){
-      try{
-        const raw = window.localStorage.getItem(LB_KEY);
-        const list = raw ? JSON.parse(raw) : [];
-        list.push({ name: name || 'PLAYER', score, wave, ts: Date.now() });
-        list.sort((a,b)=> b.score - a.score);
-        const top = list.slice(0, 30);
-        window.localStorage.setItem(LB_KEY, JSON.stringify(top));
-        return top;
-      }catch(err){
-        return null;
-      }
-    }
-    return null;
   }
 
   function renderLeaderboardRows(list){
@@ -1063,14 +1175,42 @@
     updateHUD();
   }
 
-  function triggerDash(dir, now){
+  function activateLaser(now){
     if(!state.running || state.paused) return;
-    if(now < state.dashReadyAt) return;
-    state.dashUntil = now + 150;
-    state.dashVX = dir * 680;
-    state.dashReadyAt = now + state.dashCooldown;
-    state.invulnUntil = Math.max(state.invulnUntil, now + 220);
-    sfx.dash();
+    if(now < state.laserReadyAt) return;
+    const p = state.player;
+    state.laserX = p.x + p.w/2;
+    state.laserUntil = now + 380;
+    state.laserReadyAt = now + state.laserCooldown;
+    sfx.laser();
+    triggerShake(5, 0.15);
+    updateLaserUI(now);
+
+    const halfW = 15;
+    for(const en of state.enemies){
+      if(!en.alive) continue;
+      if(en.x < state.laserX + halfW && en.x + en.w > state.laserX - halfW){
+        en.alive = false;
+        registerKill(en.x+en.w/2, en.y+en.h/2, 10 * state.wave);
+        spawnExplosion(en.x+en.w/2, en.y+en.h/2, en.color, 12);
+      }
+    }
+
+    if(state.boss && state.boss.alive){
+      const boss = state.boss;
+      if(boss.x < state.laserX + halfW && boss.x + boss.w > state.laserX - halfW){
+        boss.hp -= Math.max(1, Math.ceil(boss.maxHp * 0.12));
+        spawnExplosion(boss.x+boss.w/2, boss.y+boss.h/2, boss.color, 20);
+        triggerShake(8, 0.2);
+        if(boss.hp <= 0){
+          boss.alive = false;
+          registerKill(boss.x+boss.w/2, boss.y+boss.h/2, 50 * state.wave);
+          spawnExplosion(boss.x+boss.w/2, boss.y+boss.h/2, boss.color, 60);
+          triggerShake(16, 0.5);
+        }
+      }
+    }
+    updateHUD();
   }
 
   function spawnExplosion(x,y,color,count){
@@ -1315,25 +1455,30 @@
   }
 
   // ---------- Input ----------
+  function isSpaceKey(e){
+    return e.code === 'Space' || e.key === ' ' || e.key === 'Spacebar' || e.keyCode === 32 || e.which === 32;
+  }
   window.addEventListener('keydown', (e)=>{
-    if(e.code === 'ArrowLeft' || e.code === 'KeyA'){
-      state.keys.left = true;
-    }
-    if(e.code === 'ArrowRight' || e.code === 'KeyD'){
-      state.keys.right = true;
-    }
-    if(e.code === 'Control'){
-      const dir = state.keys.left ? -1 : (state.keys.right ? 1 : 1);
-      triggerDash(dir, performance.now());
-    }
-    if(e.code === 'Space'){ state.keys.fire = true; e.preventDefault(); }
+    if(e.code === 'ArrowLeft' || e.code === 'KeyA'){ state.keys.left = true; }
+    if(e.code === 'ArrowRight' || e.code === 'KeyD'){ state.keys.right = true; }
+    if(isSpaceKey(e)){ state.keys.fire = true; ensureAudio(); e.preventDefault(); }
     if(e.code === 'ShiftLeft' || e.code === 'ShiftRight' || e.code === 'KeyZ'){ activateUltimate(); }
+    if(e.code === 'KeyX' || e.code === 'KeyC'){ ensureAudio(); activateLaser(performance.now()); }
     if(e.code === 'KeyP' || e.code === 'Escape'){ togglePause(); }
   });
   window.addEventListener('keyup', (e)=>{
-    if(e.code === 'ArrowLeft' || e.code === 'KeyA'){ state.keys.left = false; state.lastTapLeftAt = performance.now(); }
-    if(e.code === 'ArrowRight' || e.code === 'KeyD'){ state.keys.right = false; state.lastTapRightAt = performance.now(); }
-    if(e.code === 'Space') state.keys.fire = false;
+    if(e.code === 'ArrowLeft' || e.code === 'KeyA'){ state.keys.left = false; }
+    if(e.code === 'ArrowRight' || e.code === 'KeyD'){ state.keys.right = false; }
+    if(isSpaceKey(e)) state.keys.fire = false;
+  });
+  // fallback: some tablet / bluetooth keyboards don't populate e.code
+  // reliably on keydown, but still fire a usable keypress event for Space
+  window.addEventListener('keypress', (e)=>{
+    if(e.key === ' ' || e.charCode === 32 || e.keyCode === 32){
+      state.keys.fire = true;
+      ensureAudio();
+      e.preventDefault();
+    }
   });
 
   window.addEventListener('blur', ()=>{
@@ -1377,29 +1522,25 @@
     el.addEventListener('mouseup', ()=>{ if(!touchActive) onUp(); });
     el.addEventListener('mouseleave', ()=>{ if(!touchActive) onUp(); });
   }
-  bindHold(document.getElementById('leftBtn'), ()=>{
-    state.keys.left = true;
-    const now = performance.now();
-    if(now - state.lastTapLeftAt < 280) triggerDash(-1, now);
-  }, ()=>{
-    state.keys.left = false;
-    state.lastTapLeftAt = performance.now();
-  });
-  bindHold(document.getElementById('rightBtn'), ()=>{
-    state.keys.right = true;
-    const now = performance.now();
-    if(now - state.lastTapRightAt < 280) triggerDash(1, now);
-  }, ()=>{
-    state.keys.right = false;
-    state.lastTapRightAt = performance.now();
-  });
+  bindHold(document.getElementById('leftBtn'), ()=>{ state.keys.left = true; }, ()=>{ state.keys.left = false; });
+  bindHold(document.getElementById('rightBtn'), ()=>{ state.keys.right = true; }, ()=>{ state.keys.right = false; });
   bindHold(document.getElementById('fireBtn'), ()=>state.keys.fire=true, ()=>state.keys.fire=false);
 
   ultiBtn.addEventListener('touchstart', (e)=>{ e.preventDefault(); ensureAudio(); activateUltimate(); }, {passive:false});
   ultiBtn.addEventListener('click', ()=>{ ensureAudio(); activateUltimate(); });
 
+  laserBtn.addEventListener('touchstart', (e)=>{ e.preventDefault(); ensureAudio(); activateLaser(performance.now()); }, {passive:false});
+  laserBtn.addEventListener('click', ()=>{ ensureAudio(); activateLaser(performance.now()); });
+
   pauseBtn.addEventListener('click', ()=> togglePause());
   pauseBtn.addEventListener('touchstart', (e)=>{ e.preventDefault(); togglePause(); }, {passive:false});
+
+  function toggleAutoFire(){
+    state.autoFire = !state.autoFire;
+    autoFireBtn.classList.toggle('active', state.autoFire);
+  }
+  autoFireBtn.addEventListener('click', ()=> toggleAutoFire());
+  autoFireBtn.addEventListener('touchstart', (e)=>{ e.preventDefault(); e.stopPropagation(); toggleAutoFire(); }, {passive:false});
 
   wrap.addEventListener('click', ()=>{
     if(state.replayPlaying && !state.replayForced && performance.now() - state.replayStartReal > 200) endReplay();
@@ -1416,6 +1557,7 @@
         ensureAudio();
         overlay.classList.add('hidden');
         resetGame();
+        focusStage();
       });
     }
     if(lBtn){
@@ -1476,6 +1618,7 @@
 
   function update(dt, now){
     if(!state.running) return;
+    updateLaserUI(now);
     if(state.paused) return;
 
     // stars
@@ -1500,22 +1643,10 @@
     const dizzyOn = now < state.dizzyUntil;
     const moveDir = (state.keys.left ? -1 : 0) + (state.keys.right ? 1 : 0);
     let speedX = moveDir * (dizzyOn ? -1 : 1) * p.speed;
-    const dashing = now < state.dashUntil;
-    if(dashing){
-      speedX += state.dashVX;
-      state.dashTrail.push({x:p.x, y:p.y, life:0.22, maxLife:0.22});
-    }
     p.x += speedX * dt;
     p.x = Math.max(6, Math.min(CSS_W - p.w - 6, p.x));
 
-    // dash afterimage trail decay
-    for(let i=state.dashTrail.length-1;i>=0;i--){
-      const tr = state.dashTrail[i];
-      tr.life -= dt;
-      if(tr.life <= 0) state.dashTrail.splice(i,1);
-    }
-
-    if(state.keys.fire) playerShoot(now);
+    if(state.keys.fire || state.autoFire) playerShoot(now);
 
     // player bullets
     for(let i=state.playerBullets.length-1;i>=0;i--){
@@ -1803,6 +1934,7 @@
     document.getElementById('retryBtn').addEventListener('click', ()=>{
       overlay.classList.add('hidden');
       resetGame();
+      focusStage();
     });
     const viewLbBtn = document.getElementById('viewLbBtn');
     if(viewLbBtn){
@@ -1897,11 +2029,21 @@
       ctx.strokeRect(barX, barY, barW, 8);
     }
 
-    // dash afterimage trail
-    for(const tr of state.dashTrail){
+    // laser beam
+    const laserNow = performance.now();
+    if(laserNow < state.laserUntil && state.player){
+      const remainingT = state.laserUntil - laserNow;
+      const alpha = Math.min(1, remainingT / 120);
       ctx.save();
-      ctx.globalAlpha = Math.max(0, tr.life / tr.maxLife) * 0.55;
-      drawSprite(SHIP, tr.x, tr.y, state.player.px, '#3ddcff', false);
+      ctx.globalAlpha = 0.85 * alpha;
+      const grad = ctx.createLinearGradient(state.laserX-15, 0, state.laserX+15, 0);
+      grad.addColorStop(0, 'rgba(61,220,255,0)');
+      grad.addColorStop(0.5, 'rgba(200,250,255,0.95)');
+      grad.addColorStop(1, 'rgba(61,220,255,0)');
+      ctx.fillStyle = grad;
+      ctx.shadowColor = '#3ddcff';
+      ctx.shadowBlur = 22;
+      ctx.fillRect(state.laserX-15, -10, 30, state.player.y + state.player.h/2 + 10);
       ctx.restore();
     }
 
