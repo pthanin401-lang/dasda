@@ -908,12 +908,12 @@
       px,
       bitmap: BOSS,
       color:'#ff3b3b',
-      hp: 22 + state.wave*5,
-      maxHp: 22 + state.wave*5,
+      hp: 10 + state.wave*3,
+      maxHp: 10 + state.wave*3,
       dir:1,
-      speed: 46 + state.wave*4,
+      speed: 26 + state.wave*3,
       lastShot:0,
-      shotInterval: Math.max(360, 900 - state.wave*30),
+      shotInterval: Math.max(480, 1150 - state.wave*24),
       alive:true,
       bob: 0
     };
@@ -929,7 +929,7 @@
     }
 
     const cols = 7;
-    const rows = Math.min(5 + Math.floor((state.wave-1)/2), 7);
+    const rows = Math.min(2 + Math.floor((state.wave-1)/2), 7);
     const px = 3.2;
     const spacingX = 34;
     const spacingY = 28;
@@ -954,8 +954,8 @@
         });
       }
     }
-    state.enemySpeed = 30 + Math.min(state.wave-1, 8) * 7;
-    state.enemyShotInterval = Math.max(260, 500 - Math.min(state.wave-1, 8) * 26);
+    state.enemySpeed = 14 + Math.min(state.wave-1, 14) * 5;
+    state.enemyShotInterval = Math.max(260, 950 - Math.min(state.wave-1, 14) * 48);
   }
 
   function resetGame(){
@@ -1026,17 +1026,9 @@
     pauseBtn.textContent = state.paused ? '►' : '❙❙';
   }
 
-  // ---------- Leaderboard (Supabase, with localStorage fallback if offline) ----------
-  const SUPABASE_URL = 'https://klyfylfqiikhfauysatn.supabase.co';
-  const SUPABASE_KEY = 'sb_publishable_w6C9R2egMbre7nhe1JY2Wg_qWOsDpRq';
-  const SUPABASE_TABLE = 'dd'; // table name, taken from the REST URL you gave
-  const SUPABASE_REST = `${SUPABASE_URL}/rest/v1/${SUPABASE_TABLE}`;
-  const SUPABASE_HEADERS = {
-    'apikey': SUPABASE_KEY,
-    'Authorization': `Bearer ${SUPABASE_KEY}`
-  };
-
+  // ---------- Leaderboard (cloud storage when available, localStorage fallback) ----------
   const LB_KEY = 'pixel_invaders_leaderboard';
+  const cloudStorageOk = !!(window.storage && typeof window.storage.get === 'function');
   let localStorageOk = false;
   try{
     const t = '__pixel_invaders_test__';
@@ -1044,68 +1036,52 @@
     window.localStorage.removeItem(t);
     localStorageOk = true;
   }catch(err){ localStorageOk = false; }
-  const storageOk = true;       // Supabase is always attempted first
-  const storageIsShared = true; // Supabase scores are shared across everyone playing this page
+  const storageOk = cloudStorageOk || localStorageOk;
+  const storageIsShared = cloudStorageOk;
 
   function escapeHtml(str){
     return String(str).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   }
 
-  function localGetLeaderboard(){
-    if(!localStorageOk) return [];
-    try{
-      const raw = window.localStorage.getItem(LB_KEY);
-      if(!raw) return [];
-      const arr = JSON.parse(raw);
-      return Array.isArray(arr) ? arr : [];
-    }catch(err){ return []; }
-  }
-
-  function localSaveLeaderboardEntry(name, score, wave){
-    if(!localStorageOk) return null;
-    try{
-      const list = localGetLeaderboard();
-      list.push({ name: name || 'PLAYER', score, wave, ts: Date.now() });
-      list.sort((a,b)=> b.score - a.score);
-      const top = list.slice(0, 30);
-      window.localStorage.setItem(LB_KEY, JSON.stringify(top));
-      return top;
-    }catch(err){ return null; }
-  }
-
   async function getLeaderboard(){
-    try{
-      const url = `${SUPABASE_REST}?select=name,score,wave&order=score.desc&limit=15`;
-      const res = await fetch(url, { headers: SUPABASE_HEADERS });
-      if(!res.ok) throw new Error('Supabase select failed: ' + res.status);
-      const data = await res.json();
-      return Array.isArray(data) ? data : [];
-    }catch(err){
-      console.error('Supabase getLeaderboard error, falling back to localStorage:', err);
-      return localGetLeaderboard();
+    if(cloudStorageOk){
+      try{
+        const res = await window.storage.get(LB_KEY, true);
+        if(!res || !res.value) return [];
+        const arr = JSON.parse(res.value);
+        return Array.isArray(arr) ? arr : [];
+      }catch(err){
+        return [];
+      }
     }
+    if(localStorageOk){
+      try{
+        const raw = window.localStorage.getItem(LB_KEY);
+        if(!raw) return [];
+        const arr = JSON.parse(raw);
+        return Array.isArray(arr) ? arr : [];
+      }catch(err){
+        return [];
+      }
+    }
+    return [];
   }
 
   async function saveLeaderboardEntry(name, score, wave){
-    const entry = { name: (name || 'PLAYER'), score, wave };
+    if(!storageOk) return null;
     try{
-      const res = await fetch(SUPABASE_REST, {
-        method: 'POST',
-        headers: {
-          ...SUPABASE_HEADERS,
-          'Content-Type': 'application/json',
-          'Prefer': 'return=minimal'
-        },
-        body: JSON.stringify(entry)
-      });
-      if(!res.ok){
-        const body = await res.text().catch(()=> '');
-        throw new Error('Supabase insert failed: ' + res.status + ' ' + body);
+      const list = await getLeaderboard();
+      list.push({ name: name || 'PLAYER', score, wave, ts: Date.now() });
+      list.sort((a,b)=> b.score - a.score);
+      const top = list.slice(0, 30);
+      if(cloudStorageOk){
+        await window.storage.set(LB_KEY, JSON.stringify(top), true);
+      } else if(localStorageOk){
+        window.localStorage.setItem(LB_KEY, JSON.stringify(top));
       }
-      return await getLeaderboard();
+      return top;
     }catch(err){
-      console.error('Supabase saveLeaderboardEntry error, falling back to localStorage:', err);
-      return localSaveLeaderboardEntry(name, score, wave);
+      return null;
     }
   }
 
@@ -1797,7 +1773,7 @@
       if(now - state.lastEnemyShot > state.enemyShotInterval){
         const shooters = state.enemies.filter(e=>e.alive);
         if(shooters.length){
-          const volleyCount = Math.min(1 + Math.floor(state.wave/3), shooters.length, 3);
+          const volleyCount = Math.min(1 + Math.floor(state.wave/4), shooters.length, 3);
           const pool = shooters.slice();
           for(let v=0; v<volleyCount; v++){
             const idx = Math.floor(Math.random()*pool.length);
@@ -1806,7 +1782,7 @@
               x: shooter.x + shooter.w/2 - 2,
               y: shooter.y + shooter.h,
               w:4, h:10,
-              speed: 200 + state.wave*15,
+              speed: 130 + state.wave*10,
               vx: 0
             });
           }
